@@ -11,10 +11,19 @@ def is_all_spaces(s):
 def num_leading_spaces(s):
     return len(s) - len(s.lstrip())
 
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
 def format_char_name(s):
     paren_index = s.find('(')
     if paren_index > 0:
         return s[:paren_index].strip()
+    if is_number(s.strip()):
+        return ''
     return s.strip()
 
 # Determine the number of leading spaces before 'dialogue' lines
@@ -34,7 +43,7 @@ def get_dialogue_leading_spaces(script):
     return max_num_spaces
 
 # Really mediocre initial scraping code
-url = 'http://www.imsdb.com/scripts/Buffy-the-Vampire-Slayer.html'
+url = 'http://www.imsdb.com/scripts/2001-A-Space-Odyssey.html'
 char_lines = {}
 
 response = requests.get(url)
@@ -72,3 +81,4 @@ for item in script.contents:
 
 for char in char_lines:
     print(str(len(char_lines[char])) + '\t' +char)
+    print('\t' + char_lines[char][0][:100])
