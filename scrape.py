@@ -49,11 +49,11 @@ char_lines = {}
 response = requests.get(url)
 
 soup = BeautifulSoup(response.text, 'html5lib')
-# Different scripts have different amounts of 'pre' tags... >:(
-# TODO figure this out automatically
+# find pre tags until we are in the deepest pre tag
 script = soup.find('pre')
-if script.find('pre') is not None:
+while script.find('pre') is not None:
     script = script.find('pre')
+
 nls_dialogue = get_dialogue_leading_spaces(script)
 print(nls_dialogue)
 
