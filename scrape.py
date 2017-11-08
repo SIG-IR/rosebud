@@ -5,6 +5,7 @@ import requests
 import re
 from collections import *
 
+# Test push
 # Is a string all spaces (ignores parenthesis)
 def is_all_spaces(s):
     return len(s.lstrip()) == 0 or s.lstrip().find('(') == 0
