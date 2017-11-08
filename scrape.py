@@ -5,12 +5,14 @@ import requests
 import re
 from collections import *
 
+# Is a string all spaces (ignores parenthesis)
 def is_all_spaces(s):
     return len(s.lstrip()) == 0 or s.lstrip().find('(') == 0
 
 def num_leading_spaces(s):
     return len(s) - len(s.lstrip())
 
+# Utility function, is some string a number
 def is_number(s):
     try:
         float(s)
@@ -18,6 +20,8 @@ def is_number(s):
     except ValueError:
         return False
 
+# Formats a character name - removes parens and anything in between parens,
+# ignores character names that are just numbers
 def format_char_name(s):
     paren_index = s.find('(')
     if paren_index > 0:
@@ -29,15 +33,20 @@ def format_char_name(s):
 # Determine the number of leading spaces before 'dialogue' lines
 def get_dialogue_leading_spaces(script):
     nls = []
+
+    # Count every number of every length of leading spaces
     for item in script.contents:
         if type(item) != Tag:
             for line in item.split('\n'):
                 if not is_all_spaces(line):
                     nls += [num_leading_spaces(line)]
 
+    # Determine the number of spaces before the most indented type of line
     max_num_spaces = 0
     c = Counter(nls)
-    for num_spaces in c:
+    for num_spaces in c
+        # Make sure this number of spaces occurs enough, so that we're not
+        # picking something like right-aligned text at the beginning of a script
         if c[num_spaces] > 100:
             max_num_spaces = max(max_num_spaces, num_spaces)
     return max_num_spaces
