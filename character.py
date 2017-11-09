@@ -8,12 +8,8 @@ class Character():
         self.lines = lines
         self.blob = tb(' '.join(lines))
 
-    def gen_tf_idf_vec(self, bloblist):
-        self.tf_idf_vec = [self.tf_idf(word, bloblist) for word in self.all_words_in(bloblist)]
-
-    def all_words_in(self, bloblist):
-        words = set().union(*[blob.words for blob in bloblist])
-        return words
+    def gen_tf_idf_vec(self, bloblist, all_words):
+        self.tf_idf_vec = [self.tf_idf(word, bloblist) for word in all_words]
 
     def tf(self, word, blob):
         return blob.words.count(word) / len(blob.words)
