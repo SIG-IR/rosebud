@@ -5,8 +5,6 @@ import requests
 import re
 from collections import *
 
-from scrape import scrape_movie_page
-
 all_movies_url = 'http://www.imsdb.com/all%20scripts/'
 all_movies_page = requests.get(all_movies_url).text
 

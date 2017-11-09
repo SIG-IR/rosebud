@@ -4,6 +4,9 @@ from bs4.element import NavigableString
 import requests
 import re
 from collections import *
+from character import Character
+
+# Test push
 # Rohin has contributed to this!
 # Is a string all spaces (ignores parenthesis)
 def is_all_spaces(s):
@@ -51,44 +54,63 @@ def get_dialogue_leading_spaces(script):
             max_num_spaces = max(max_num_spaces, num_spaces)
     return max_num_spaces
 
-def scrape_movie_page(url):
-    # Really mediocre initial scraping code
-    url = 'http://www.imsdb.com/scripts/2001-A-Space-Odyssey.html'
-    char_lines = {}
 
-    response = requests.get(url)
-
-    soup = BeautifulSoup(response.text, 'html5lib')
-    # find pre tags until we are in the deepest pre tag
-    script = soup.find('pre')
-    while script.find('pre') is not None:
-        script = script.find('pre')
-
-    nls_dialogue = get_dialogue_leading_spaces(script)
-    print(nls_dialogue)
-
-    current_person = ''
-    for item in script.contents:
-        # Figure out who says a line
-        if type(item) == Tag:
-            char_name = format_char_name(item.text)
-            if len(char_name) > 0:
-                current_person = char_name
-        else:
-            actual_text = ''
-            text_lines = item.split('\n')
-            for line in text_lines:
-                nls_line = num_leading_spaces(line)
-                if nls_line == nls_dialogue:
-                    actual_text += ' ' + line.strip()
-            # Remove extraneous spaces
-            actual_text = re.sub(' +', ' ', actual_text).strip()
-            if len(actual_text) > 0:
-                # Add to character's lines
-                if current_person not in char_lines:
-                    char_lines[current_person] = []
-                char_lines[current_person].append(actual_text)
-
+def print_cos_sim(char_lines):
+    characters = []
     for char in char_lines:
-        print(str(len(char_lines[char])) + '\t' +char)
-        print('\t' + char_lines[char][0][:100])
+        if len(char_lines[char]) > 10:
+            characters.append(Character(char.title(), char_lines[char]))
+
+    bloblist = [char.blob for char in characters]
+    for char in characters:
+        char.gen_tf_idf_vec(bloblist)
+        print(char.name)
+
+    for c1 in characters:
+        print('\n' + c1.name)
+        cosine_sim = {}
+        for c2 in characters:
+            cosine_sim[c2.name] = c1.cosine_sim(c2)
+        sorted_chars = sorted(characters, key=lambda a : -cosine_sim[a.name])
+        for i in range(len(sorted_chars)):
+            c2 = sorted_chars[i]
+            print(str(i + 1) + '. ' + c2.name + '\t\t' + str(cosine_sim[c2.name]))
+
+# Really mediocre initial scraping code
+url = 'http://www.imsdb.com/scripts/2001-A-Space-Odyssey.html'
+char_lines = {}
+
+response = requests.get(url)
+
+soup = BeautifulSoup(response.text, 'html5lib')
+# find pre tags until we are in the deepest pre tag
+script = soup.find('pre')
+while script.find('pre') is not None:
+    script = script.find('pre')
+
+nls_dialogue = get_dialogue_leading_spaces(script)
+print(nls_dialogue)
+
+current_person = ''
+for item in script.contents:
+    # Figure out who says a line
+    if type(item) == Tag:
+        char_name = format_char_name(item.text)
+        if len(char_name) > 0:
+            current_person = char_name
+    else:
+        actual_text = ''
+        text_lines = item.split('\n')
+        for line in text_lines:
+            nls_line = num_leading_spaces(line)
+            if nls_line == nls_dialogue:
+                actual_text += ' ' + line.strip()
+        # Remove extraneous spaces
+        actual_text = re.sub(' +', ' ', actual_text).strip()
+        if len(actual_text) > 0:
+            # Add to character's lines
+            if current_person not in char_lines:
+                char_lines[current_person] = []
+            char_lines[current_person].append(actual_text)
+
+print_cos_sim(char_lines)
