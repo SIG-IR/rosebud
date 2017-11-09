@@ -44,50 +44,51 @@ def get_dialogue_leading_spaces(script):
     # Determine the number of spaces before the most indented type of line
     max_num_spaces = 0
     c = Counter(nls)
-    for num_spaces in c
+    for num_spaces in c:
         # Make sure this number of spaces occurs enough, so that we're not
         # picking something like right-aligned text at the beginning of a script
         if c[num_spaces] > 100:
             max_num_spaces = max(max_num_spaces, num_spaces)
     return max_num_spaces
 
-# Really mediocre initial scraping code
-url = 'http://www.imsdb.com/scripts/2001-A-Space-Odyssey.html'
-char_lines = {}
+def scrape_movie_page(url):
+    # Really mediocre initial scraping code
+    url = 'http://www.imsdb.com/scripts/2001-A-Space-Odyssey.html'
+    char_lines = {}
 
-response = requests.get(url)
+    response = requests.get(url)
 
-soup = BeautifulSoup(response.text, 'html5lib')
-# find pre tags until we are in the deepest pre tag
-script = soup.find('pre')
-while script.find('pre') is not None:
-    script = script.find('pre')
+    soup = BeautifulSoup(response.text, 'html5lib')
+    # find pre tags until we are in the deepest pre tag
+    script = soup.find('pre')
+    while script.find('pre') is not None:
+        script = script.find('pre')
 
-nls_dialogue = get_dialogue_leading_spaces(script)
-print(nls_dialogue)
+    nls_dialogue = get_dialogue_leading_spaces(script)
+    print(nls_dialogue)
 
-current_person = ''
-for item in script.contents:
-    # Figure out who says a line
-    if type(item) == Tag:
-        char_name = format_char_name(item.text)
-        if len(char_name) > 0:
-            current_person = char_name
-    else:
-        actual_text = ''
-        text_lines = item.split('\n')
-        for line in text_lines:
-            nls_line = num_leading_spaces(line)
-            if nls_line == nls_dialogue:
-                actual_text += ' ' + line.strip()
-        # Remove extraneous spaces
-        actual_text = re.sub(' +', ' ', actual_text).strip()
-        if len(actual_text) > 0:
-            # Add to character's lines
-            if current_person not in char_lines:
-                char_lines[current_person] = []
-            char_lines[current_person].append(actual_text)
+    current_person = ''
+    for item in script.contents:
+        # Figure out who says a line
+        if type(item) == Tag:
+            char_name = format_char_name(item.text)
+            if len(char_name) > 0:
+                current_person = char_name
+        else:
+            actual_text = ''
+            text_lines = item.split('\n')
+            for line in text_lines:
+                nls_line = num_leading_spaces(line)
+                if nls_line == nls_dialogue:
+                    actual_text += ' ' + line.strip()
+            # Remove extraneous spaces
+            actual_text = re.sub(' +', ' ', actual_text).strip()
+            if len(actual_text) > 0:
+                # Add to character's lines
+                if current_person not in char_lines:
+                    char_lines[current_person] = []
+                char_lines[current_person].append(actual_text)
 
-for char in char_lines:
-    print(str(len(char_lines[char])) + '\t' +char)
-    print('\t' + char_lines[char][0][:100])
+    for char in char_lines:
+        print(str(len(char_lines[char])) + '\t' +char)
+        print('\t' + char_lines[char][0][:100])
