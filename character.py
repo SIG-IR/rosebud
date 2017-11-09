@@ -9,14 +9,10 @@ class Character():
         self.blob = tb(' '.join(lines))
 
     def gen_tf_idf_vec(self, bloblist):
-        self.tf_idf_vec = []
-        for word in self.all_words_in(bloblist):
-            self.tf_idf_vec.append(self.tf_idf(word, bloblist))
+        self.tf_idf_vec = [self.tf_idf(word, bloblist) for word in self.all_words_in(bloblist)]
 
     def all_words_in(self, bloblist):
-        words = []
-        for blob in bloblist:
-            words += blob.words
+        words = set().union(*[blob.words for blob in bloblist])
         return words
 
     def tf(self, word, blob):
@@ -32,9 +28,9 @@ class Character():
         return self.tf(word, self.blob) * self.idf(word, bloblist)
 
     def cosine_sim(self, other):
-        sum_components = sum([self.tf_idf_vec[i] * other.tf_idf_vec[i] for i in range(len(self.tf_idf_vec))])
-        sqrt_self = math.sqrt(sum([a ** 2 for a in self.tf_idf_vec]))
-        sqrt_other = math.sqrt(sum([b ** 2 for b in other.tf_idf_vec]))
+        sum_components = sum(map(lambda x : x[0] * x[1], zip(self.tf_idf_vec, other.tf_idf_vec)))
+        sqrt_self = math.sqrt(sum(map(lambda x : x ** 2, self.tf_idf_vec)))
+        sqrt_other = math.sqrt(sum(map(lambda x : x ** 2, other.tf_idf_vec)))
         return sum_components / (sqrt_self * sqrt_other)
 
 
