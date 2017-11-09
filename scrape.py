@@ -4,6 +4,7 @@ from bs4.element import NavigableString
 import requests
 import re
 from collections import *
+from character import Character
 
 # Is a string all spaces (ignores parenthesis)
 def is_all_spaces(s):
@@ -44,12 +45,34 @@ def get_dialogue_leading_spaces(script):
     # Determine the number of spaces before the most indented type of line
     max_num_spaces = 0
     c = Counter(nls)
-    for num_spaces in c
+    for num_spaces in c:
         # Make sure this number of spaces occurs enough, so that we're not
         # picking something like right-aligned text at the beginning of a script
         if c[num_spaces] > 100:
             max_num_spaces = max(max_num_spaces, num_spaces)
     return max_num_spaces
+
+
+def print_cos_sim(char_lines):
+    characters = []
+    for char in char_lines:
+        if len(char_lines[char]) > 10:
+            characters.append(Character(char.title(), char_lines[char]))
+
+    bloblist = [char.blob for char in characters]
+    for char in characters:
+        char.gen_tf_idf_vec(bloblist)
+        print(char.name)
+
+    for c1 in characters:
+        print('\n' + c1.name)
+        cosine_sim = {}
+        for c2 in characters:
+            cosine_sim[c2.name] = c1.cosine_sim(c2)
+        sorted_chars = sorted(characters, key=lambda a : -cosine_sim[a.name])
+        for i in range(len(sorted_chars)):
+            c2 = sorted_chars[i]
+            print(str(i + 1) + '. ' + c2.name + '\t\t' + str(cosine_sim[c2.name]))
 
 # Really mediocre initial scraping code
 url = 'http://www.imsdb.com/scripts/2001-A-Space-Odyssey.html'
@@ -88,6 +111,4 @@ for item in script.contents:
                 char_lines[current_person] = []
             char_lines[current_person].append(actual_text)
 
-for char in char_lines:
-    print(str(len(char_lines[char])) + '\t' +char)
-    print('\t' + char_lines[char][0][:100])
+print_cos_sim(char_lines)
