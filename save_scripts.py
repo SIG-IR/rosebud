@@ -7,7 +7,7 @@ with open('script_links.json', 'r') as f:
     for script in script_list:
         name = script['name']
         url = script['url']
-        print name, url
+        print(name, url)
         if url[-5:] != '.html':
             continue
         response = requests.get(url)

@@ -1,10 +1,11 @@
 from bs4 import BeautifulSoup
 from bs4.element import Tag
 from bs4.element import NavigableString
-import requests
 import re
 from collections import *
 from character import Character
+from os import path
+import os
 
 # Test push
 # Rohin has contributed to this!
@@ -76,49 +77,52 @@ def print_cos_sim(characters):
 
             print((str(i + 1) + '. ' + c2.name).ljust(20) + '{:.4f}'.format(cosine_sim[c2.name]))
 
-def scrape_characters(url):
+def scrape_characters(filepath):
     # Really mediocre initial scraping code
     char_lines = {}
 
-    response = requests.get(url)
+    with open(filepath, 'r') as f:
+        soup = BeautifulSoup(f.read(), 'html5lib')
+        # find pre tags until we are in the deepest pre tag
+        script = soup.find('pre')
+        if script is None:
+            return []
+        while script.find('pre') is not None:
+            script = script.find('pre')
 
-    soup = BeautifulSoup(response.text, 'html5lib')
-    # find pre tags until we are in the deepest pre tag
-    script = soup.find('pre')
-    while script.find('pre') is not None:
-        script = script.find('pre')
+        nls_dialogue = get_dialogue_leading_spaces(script)
 
-    nls_dialogue = get_dialogue_leading_spaces(script)
+        current_person = ''
+        for item in script.contents:
+            # Figure out who says a line
+            if type(item) == Tag:
+                char_name = format_char_name(item.text)
+                if len(char_name) > 0:
+                    current_person = char_name
+            else:
+                actual_text = ''
+                text_lines = item.split('\n')
+                for line in text_lines:
+                    nls_line = num_leading_spaces(line)
+                    if nls_line == nls_dialogue:
+                        actual_text += ' ' + line.strip()
+                # Remove extraneous spaces
+                actual_text = re.sub(' +', ' ', actual_text).strip()
+                if len(actual_text) > 0:
+                    # Add to character's lines
+                    if current_person not in char_lines:
+                        char_lines[current_person] = []
+                    char_lines[current_person].append(actual_text)
+        characters = []
+        for char in char_lines:
+            if len(char_lines[char]) > 10:
+                characters.append(Character(char.title(), char_lines[char]))
+        return characters
 
-    current_person = ''
-    for item in script.contents:
-        # Figure out who says a line
-        if type(item) == Tag:
-            char_name = format_char_name(item.text)
-            if len(char_name) > 0:
-                current_person = char_name
-        else:
-            actual_text = ''
-            text_lines = item.split('\n')
-            for line in text_lines:
-                nls_line = num_leading_spaces(line)
-                if nls_line == nls_dialogue:
-                    actual_text += ' ' + line.strip()
-            # Remove extraneous spaces
-            actual_text = re.sub(' +', ' ', actual_text).strip()
-            if len(actual_text) > 0:
-                # Add to character's lines
-                if current_person not in char_lines:
-                    char_lines[current_person] = []
-                char_lines[current_person].append(actual_text)
-    characters = []
-    for char in char_lines:
-        if len(char_lines[char]) > 10:
-            characters.append(Character(char.title(), char_lines[char]))
-    return characters
+files = [f for f in os.listdir('./scripts/')]
+characters = []
+for file in files:
+    characters += scrape_characters('./scripts/' + file)
 
-
-characters = scrape_characters("http://www.imsdb.com/scripts/Blade-Runner.html")
-characters += scrape_characters("http://www.imsdb.com/scripts/Star-Wars-A-New-Hope.html")
-characters += scrape_characters("http://www.imsdb.com/scripts/Indiana-Jones-and-the-Raiders-of-the-Lost-Ark.html")
-print_cos_sim(characters)
+print(len(characters))
+#print_cos_sim(characters)
