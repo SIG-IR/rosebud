@@ -6,6 +6,7 @@ from collections import *
 from character import Character
 from os import path
 import os
+import json
 
 # Is a string all spaces (ignores parenthesis)
 def is_all_spaces(s):
@@ -53,28 +54,6 @@ def get_dialogue_leading_spaces(script):
             max_num_spaces = max(max_num_spaces, num_spaces)
     return max_num_spaces
 
-def all_words_in(bloblist):
-    words = set().union(*[blob.words for blob in bloblist])
-    return words
-
-def print_cos_sim(characters):
-    bloblist = [char.blob for char in characters]
-    all_words = all_words_in(bloblist)
-    for char in characters:
-        char.gen_tf_idf_vec(bloblist, all_words)
-        print(char.name)
-
-    for c1 in characters:
-        print('\n========== ' + c1.name + ' ==========')
-        cosine_sim = {}
-        for c2 in characters:
-            cosine_sim[c2.name] = c1.cosine_sim(c2)
-        sorted_chars = sorted(characters, key=lambda a : -cosine_sim[a.name])
-        for i in range(len(sorted_chars)):
-            c2 = sorted_chars[i]
-
-            print((str(i + 1) + '. ' + c2.name).ljust(20) + '{:.4f}'.format(cosine_sim[c2.name]))
-
 def scrape_characters(filepath):
     # Really mediocre initial scraping code
     char_lines = {}
@@ -118,9 +97,12 @@ def scrape_characters(filepath):
         return characters
 
 files = [f for f in os.listdir('./scripts/')]
-characters = []
 for file in files:
-    characters += scrape_characters('./scripts/' + file)
+    print(file)
+    characters = scrape_characters('./scripts/' + file)
+    d = {}
+    for character in characters:
+        d[character.name] = character.lines
+    with open('./characters/' + file[:-5] + '.json', 'w') as f:
+        f.write(json.dumps(d, indent = 4, separators = (',', ': '))) 
 
-print(len(characters))
-#print_cos_sim(characters)
